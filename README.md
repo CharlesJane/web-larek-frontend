@@ -43,23 +43,48 @@ yarn build
 
 ## Данные и типы данных, используемые в приложении
 
+### Базовые типы
+
+Вынесенный тип ID карточки
+
+```
+type ID = string;
+```
+
 Карточка товара
 
 ```
 interface IProduct {
-    _id: string;
+    _id: ID; 
     description: string;
     image: string;
     title: string;
     category: string;
-    price: number;
+    price: number | null;
+}
+```
+
+Расширенный интерфейс для корзины, храним число товаров в ней
+
+```
+interface IBasketItem extends IProduct {
+    quantity: number;
+}
+```
+
+Информация о выбранных товарах и общей стоимости
+
+```
+export interface IBasketData {
+    items: IBasketItem[];
+    total: number;
 }
 ```
 
 Информация о заказе
 
 ```
-interface IOrder {
+export interface IOrder {
     payment: string;
     email: string;
     phone: string;
@@ -67,42 +92,27 @@ interface IOrder {
 }
 ```
 
-Корзина
+Данные о заказе, уходящие к серверу 
 
 ```
-interface IBasket {
+export interface IOrderData { // 
+    payment: string;
+    email: string;
+    phone: string;
+    address: string;
     total: number;
-    items: IProduct[];
+    items: IBasketItem[];
 }
 ```
 
-Интерфейс для коллекции карточек товаров, получает карточку товара
+Данные из полей форм
 
 ```
-interface IProductsList {
-    products: IProduct[];
-    preview: string | null;
-
-    getProduct(productId:string): IProduct;
+interface IFormState {
+    values: Record<string, string>; // храним текущие значения полей
+    errors: string | null ; // сохраняем результат валидации
 }
 ```
-
-Интерфейс для данных заказа, отправляет данные о заказе и валидирует информацию о выбранном способе оплаты, адресе, телефоне и почте заказчика
-
-```
-interface IOrderData {
-    setOrderInfo(orderData: IOrder): void;
-    checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo), string>): boolean;
-    setOrderBasketInfo(basketData: IBasket): void;
-}
-```
-
-Данные о количестве товаров в корзине на главной странице
-
-```
-type TPageTotal = Pick<IBasket, 'items'>;
-```
-
 Данные о товаре, отображаемые в карточке на главной странице
 
 ```
@@ -130,7 +140,126 @@ type TOrderContacts = Pick<IOrder, 'email' | 'phone'>;
 Данные о финальной стоимости товаров из корзины в модалке об успешном заказе
 
 ```
-type TBasketSuccess = Pick<IBasket, 'total'>;
+type TBasketSuccess = Pick<IOrderData, 'total'>;
+```
+
+### Модели бизнес-логики
+
+Интерфейс для коллекции карточек товаров, получает карточку товара
+
+```
+interface IProductsModel {
+    products: IProduct[];
+    getProduct(productId: ID): IProduct;
+}
+```
+
+Корзина
+
+```
+interface IBasketModel {
+    total: number;
+    items: IBasketItem[];
+}
+```
+
+Интерфейс для данных заказа
+
+```
+interface IOrderModel {
+    orderData: IOrder;
+}
+```
+
+### Компоненты отображения
+
+Интерфейс для рендера карточи товара
+
+```
+interface IProductCard {
+    render(product: IProduct): HTMLElement;
+}
+```
+
+Интерфейс для рендера списка карточек и превью выбранной карточки
+
+```
+interface IProductsView {
+    renderProducts(): void;
+    renderPreview(productId: ID): void; 
+}
+```
+
+Интерфейс для рендера корзины
+
+```
+interface IBasketView {
+    renderItems(): void;
+    renderTotal(): void;
+}
+```
+
+Интерфейс для рендера форм
+
+```
+interface IOrderView {
+    renderForm(): void;
+}
+```
+
+### Презентер
+
+Интерфейс для данных карточки, устанавливает превью и получает id переданной карточки
+
+```
+interface IProductsPresenter {
+    setPreview(productId: ID): void;
+    getPreview(): ID | null;
+}
+```
+
+Интерфейс для данных корзины, добавляет товар в список, убирает его оттуда, обновляет счетчик, собирает данные о заказе и общей сумме корзины
+
+```
+interface IBasketPresenter {
+    addItem(product: IProduct): void;
+    removeItem(productId: ID): void;
+    updateQuantity(productId: ID, quantity: number): void;
+    getBasketData(): IBasketData;
+    getTotal(): number;
+}
+```
+
+Интерфейс для данных заказа, устанавливает данные о заказе и валидирует информацию о выбранном способе оплаты, адресе, телефоне и почте заказчика, отправляет данные о полном заказе на сервер
+
+```
+interface IOrderPresenter {
+    setOrderInfo(orderData: {order: IOrder; basket: IBasketData;}): void; 
+    checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo), string>): boolean; // валидируем отправляемые данные
+    sendOrder(IOrderData): Promise<void>; 
+}
+```
+
+
+### Состояния
+
+Cостояние корзины для дальнейшей работы с представлением
+
+```
+interface IBasketState { 
+    items: IBasketItem[];
+    total: number;
+}
+```
+
+Общее состояние приложения
+
+```
+interface IAppState {
+    products: IProductsModel;
+    basket: IBasketState;
+    order: IOrderModel;
+}
 ```
 
 ##  Архитектура приложения 
@@ -170,6 +299,19 @@ type TBasketSuccess = Pick<IBasket, 'total'>;
 - getProduct(productId:string): IProduct
 Так же класс предоставляет сеттеры и геттеры для сохранения и получения данных из полей класса.
 
+#### Класс BasketData
+
+Класс отвечает за получение и логику обработки данных заказа.\
+Конструктор класса принимает экземпляр брокера событий.\
+В полях класса хранятся следующие данные:
+- basketList: IProduct[] - массив переданных в корзину карточек товаров
+- events: IEvents - экземпляр класса 'EventEmitter' для инициализации событий при изменении данных
+
+Класс предоставляет набор методов для обработки получаемых данных:
+- checkBasketValidation(data: Record<keyof TPageTotal, string>): boolean -   проверяет, что в корзине есть товары
+- setOrderBasketInfo(basketData: IBasket): void - отправляет данные о выбранных товарах (список) и общую сумму заказа
+- deleteProductFromBasket(productID: string): void - удаляет товар из массива айди карточек 
+
 #### Класс OrderData
 
 Класс отвечает за получение и логику обработки данных заказа.\
@@ -179,8 +321,8 @@ type TBasketSuccess = Pick<IBasket, 'total'>;
 
 Класс предоставляет набор методов для обработки получаемых данных:
 - setOrderInfo(orderData: IOrder): void - отправляет данные, введенные при заказе из полей payment, email, phone и address
-- checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo | TPageTotal), string>): boolean -  валидирует отправляемые на сервер данные из полей заказа, проверяет, что в корзине есть товары
-- setOrderBasketInfo(basketData: IBasket): void - отправляет данные о выбранных товарах (список) и общую сумму заказа
+- checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo), string>): boolean -  валидирует отправляемые на сервер данные из полей заказа
+
 
 ### Классы представления
 Все классы представления отвечают за отображение внутри контейнера (DOM-элемент) передаваемых в них данных.
@@ -192,8 +334,7 @@ type TBasketSuccess = Pick<IBasket, 'total'>;
 Поля класса содержат элемент разметки счетчика, куда передаются данные о количестве товаров в корзине, а так же кнопку, на который устанавливается экземпляр эмиттера. 
 
 Методы класса: 
-- getProductsListCount(productCounter: number): number - метод для отображения в разметке кол-ва карточек в корзине
-- isBasketOpen(): boolean - сохраняет состояние кнопки по слушателю
+- setBasketListCount(productCounter: number): number - метод для отображения в разметке кол-ва карточек в корзине
 
 #### Класс ProductCard 
 
@@ -203,18 +344,17 @@ type TBasketSuccess = Pick<IBasket, 'total'>;
 
 Методы: 
 - setProduct(productData: IProduct, productId: string): void - заполняет атрибуты элементов карточки данными
-- isProductInBasket(productId: string): boolean - управляет элементом кнопки, отображая active/disabled состояния, в зависимости от наличия товара в корзине 
-- deleteProduct(productId: string): void - удаляет элемент карточки из разметки
+- isProductInBasket(productId: string): boolean - управляет элементом кнопки, отображая active/disabled состояния, в зависимости от наличия товара в корзине
 - render(): HTMLElement - возвращает полностью заполненную карточку
 - геттер id возвращает уникальный id карточки
 
 #### Класс ProductsContainer 
-Отвечает за отображение листа с карточками товаров. Предоставляет геттер для получения текущего списка переданных в него карточек. В конструктор принимает контейнер, в котором размещаются карточки.
+Отвечает за рендер листа с карточками товаров. Получает массив HTML-элементов. Предоставляет метод для отрисовки текущего списка элементов разметки карточек. В конструктор принимает контейнер, в котором размещаются карточки.
 
 #### Класс ModalContainer
-Класс реализует модальное окно, являющееся контейнером для отображаемых элементов интерфейса. Предоставляет методы 'open' и 'close' для управления отображением модального окна, метод 'addContentElement' принимает темплейт отображаемого элемента и отображает его в модальном окне, метод 'addBackdrop' устанавливает затемнение на оверлэй при открытом состоянии окна. \
+Класс реализует рендер html-элемента модального окна, являющегося контейнером для отображаемых элементов интерфейса. Предоставляет методы 'open' и 'close' для управления отображением модального окна, метод 'addContentElement' принимает темплейт отображаемого элемента и отображает его в модальном окне, метод 'addBackdrop' устанавливает затемнение на оверлэй при открытом состоянии окна. \
 Устанавливает слушатели на клавиатуру для закрытия окна по Esc, а так же на клик по кнопке-крестику для закрытия модалки.
-- constructor(selector: string, events: IEvents, template: string | HTMLTemplateElement) - принимает селектор, по которому идентифицируется отображаемый элемент интерфейса, а так же экземпляр класса 'EventEmitter' для инициалции событий.
+- constructor(selector: string, events: IEvents, template: string | HTMLTemplateElement) - принимает селектор, по которому идентифицируется отображаемый элемент интерфейса,экземпляр класса 'EventEmitter' для инициалции событий, а так же передаваемый в разметку темплейт для отображения.
 
 Поля класса: 
 - modal: HTMLElement - элемент модеального окна
@@ -228,13 +368,11 @@ type TBasketSuccess = Pick<IBasket, 'total'>;
 Класс реализует отображение корзины с выводом списка добавленных в нее карточек товаров. При нажатии на кнопку инициирует событие, передавая в него объект корзины (данные о списке переданных карточек и общей сумме).
 
 Поля класса:
-- basketList: HTMLOLiestElement - элемент разметки, принимающий в поля списка карточки из экземпляра ProductsList
+- basketList: HTMLOListElement - элемент разметки, принимающий в поля списка элементы разметки карточек
 - basketButton: HTMLButtonElement - элемент кнопки для оформления заказа
 
 Методы класса:
-- getProductsList(products: TProductBasket): HTMLElement - метод получения списка элементов карточек для отображения в корзине
-- getProductsCount(products: TProductBasket): number - метод получения общего количества элементов карточек в корзине
-- setProductsList(basketFull: IBasket): void - метод для передачи массива карточек и общей суммы товаров
+- renderProductsList(products: TProductBasket): HTMLElement - метод установки списка элементов карточек, отображаемых в корзине
 - isBasketEmpty(productCount: number): boolean - управляет элементом кнопки, отображая active/disabled состояния, в зависимости от количества товара в корзине (равно или больше 0)
 
 
@@ -253,14 +391,12 @@ type TBasketSuccess = Pick<IBasket, 'total'>;
 
 Методы:
 - setValid(isValid: boolean): void - управляет активностью кнопки
-- getInputValues(): Record<string, string> - возвращает объект с данными из полей формы, где ключ - name инпута, значение - данные, введенные в инпут или выбранные из списка
 - submitForm(submitButton: HTMLButtonElement, getInputValues()): string[] - сохраняет данные формы и переходит на следующий экран
 - isSelected(paymentType: HTMLButtonElement.name): boolean - возвращает состояние кнопки выбора
 - setError(data: { field: string, value: string, validInfo: string }): void - принимает объект с данными для отображения или сокрытия текстов ошибок под полями ввода
 - showInputError(field: string, errorMessage: string): void - отображает полученный текст ошибки под указанным полем ввода
 - hideInputError(field: string): void - очищает текст ошибки под указанным полем ввода
 - clear(): void - очищает поля ввода и деактивирует кнопку продолжения
-- get form: HTMLFormElement - геттер для получения элемента формы 
 
 #### Класс OrderSuccess
 Класс реализует окно-результат уведомления об успешном действии. При нажатии на кнопку инициирует событие, передающее информацию модальному окну о закрытии. 

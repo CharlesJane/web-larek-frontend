@@ -1,12 +1,25 @@
-// Интерфейсы данных
+// Интерфейсы данных - разносим по слоям и выносим базу
+
+ // Базовые типы 
+
+export type ID = string;
 
 export interface IProduct {
-    _id: string; // сохраняется в preview IProductsList
+    _id: ID; // сохраняется в preview IProductsList
     description: string;
     image: string;
     title: string;
     category: string;
-    price: number;
+    price: number | null;
+}
+
+export interface IBasketItem extends IProduct {
+    quantity: number; // расширяем тип для корзины, храним число товаров в ней
+}
+
+export interface IBasketData {
+    items: IBasketItem[];
+    total: number;
 }
 
 export interface IOrder {
@@ -16,25 +29,19 @@ export interface IOrder {
     address: string;
 }
 
-export interface IBasket {
+export interface IOrderData { // данные, уходящие к серверу для оформления заказа
+    payment: string;
+    email: string;
+    phone: string;
+    address: string;
     total: number;
-    items: IProduct[];
+    items: IBasketItem[];
 }
 
-export interface IProductsList {
-    products: IProduct[];
-    preview: string | null; // сюда уходит id выбранной карточки
-
-    getProduct(productId:string): IProduct;
+export interface IFormState {
+    values: Record<string, string>; // храним текущие значения полей
+    errors: string | null ; // сохраняем результат валидации
 }
-
-export interface IOrderData {
-    setOrderInfo(orderData: IOrder): void; //отправляем инфо о данных заказчика
-    checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo | TPageTotal), string>): boolean; // валидируем отправляемые данные
-    setOrderBasketInfo(basketData: IBasket): void; // отправляем инфо о выбранных товаров (лист) и общую сумму заказа
-}
-
-export type TPageTotal = Pick<IBasket, 'items'>;
 
 export type TProductBase = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>;
 
@@ -44,4 +51,77 @@ export type TOrderInfo = Pick<IOrder, 'payment' | 'address'>;
 
 export type TOrderContacts = Pick<IOrder, 'email' | 'phone'>;
 
-export type TBasketSuccess = Pick<IBasket, 'total'>;
+export type TBasketSuccess = Pick<IOrderData, 'total'>;
+
+// Модели бизнес-логики
+
+export interface IProductsModel {
+    products: IProduct[];
+    getProduct(productId: ID): IProduct;
+}
+
+export interface IBasketModel {
+    total: number;
+    items: IBasketItem[];
+}
+
+export interface IOrderModel {
+    orderData: IOrder;
+}
+
+// Компоненты отображения
+
+export interface IProductCard {
+    render(product: IProduct): HTMLElement;
+}
+
+export interface IProductsView {
+    renderProducts(): void; // рендерим список карточек
+    renderPreview(productId: ID): void; // рендерим превью выбранной карточки
+}
+
+export interface IBasketView {
+    renderItems(): void;
+    renderTotal(): void;
+}
+
+export interface IOrderView {
+    renderForm(): void;
+}
+
+// Презентер - управление данными
+
+export interface IProductsPresenter {
+    setPreview(productId: ID): void;
+    getPreview(): ID | null; // сюда уходит id выбранной карточки
+}
+
+export interface IBasketPresenter {
+    addItem(product: IProduct): void;
+    removeItem(productId: ID): void;
+    updateQuantity(productId: ID, quantity: number): void;
+    getBasketData(): IOrderData;
+    getTotal(): number;
+}
+
+export interface IOrderPresenter {
+    setOrderInfo(orderData: {order: IOrder; basket: IBasketData;}): void; //собираем инфо о данных заказчика
+    checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo), string>): boolean; // валидируем отправляемые данные
+    sendOrder(): Promise<void>; 
+}
+
+// Состояния
+
+export interface IBasketState { // храним состояние корзины для дальнейшей работы с представлением
+    items: IBasketItem[];
+    total: number;
+}
+
+export interface IAppState { //храним общее состояние приложения
+    products: IProductsModel;
+    basket: IBasketState;
+    order: IOrderModel;
+}
+
+
+
