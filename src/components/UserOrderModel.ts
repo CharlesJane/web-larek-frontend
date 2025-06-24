@@ -55,7 +55,6 @@ export class UserOrderModel implements IUserOrderModel{
                 ...this._orderData
             };
             // Очищаем данные после успешной валидации
-            this.clearOrderData();
             return validatedData;
         }
         // Если валидация не прошла, возвращаем null

@@ -51,6 +51,8 @@ export type TOrderContacts = Pick<IUserOrder, 'email' | 'phone'>;
 
 export interface IProductsModel {
     items: IProduct[];
+    setItems(productArray: IProduct[]): void;
+    getItems(): IProduct[];
     getProduct(productId: string): IProduct | undefined;
 }
 
