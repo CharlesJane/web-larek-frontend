@@ -14,7 +14,7 @@ api.getProductsList()
         productsArray.items = data._items
         console.log(productsArray.items)
     })
-    .catch(err => console.log(err + 'err'))
+    .catch(err => console.log(err + ' err'))
 
 // productsArray.products = example.items;
 // productsArray.total = example.total;

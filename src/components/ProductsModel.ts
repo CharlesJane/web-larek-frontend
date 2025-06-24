@@ -5,7 +5,6 @@ export class ProductsModel implements IProductsModel {
     //     Класс отвечает за хранение карточек товаров.
     // Конструктор класса принимает экземпляр брокера событий.
     // В полях класса хранятся следующие данные:
-    protected _total: number;
     protected _items: IProduct[] = [];
     protected events: IEvents;
 
@@ -19,30 +18,6 @@ export class ProductsModel implements IProductsModel {
 
     get items() {
         return this._items;
-    }
-
-    set total(productsTotal: number) {
-        this._total = productsTotal;
-    }
-
-    get total(): number {
-        return this._total;
-    }
-
-    addProduct(product: IProduct): void {
-        if (!this._items.some(pr => pr.id === product.id)) {
-            this._items.push(product);
-            this._total++;
-            this.events.emit('product:added', product);
-        } else {
-            console.log(`Товар с ID ${product.id} уже добавлен`);
-        }
-    }
-
-    deleteProduct(id: string): void {
-        this._items = this._items.filter(product => product.id !== id);
-        this._total--;
-        this.events.emit('product:deleted');
     }
 
     // Метод для получения карточки по ID

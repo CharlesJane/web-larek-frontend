@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-var-requires */
+/* eslint-disable no-undef */
 // Generated using webpack-cli https://github.com/webpack/webpack-cli
 
-const path = require("path");
-const HtmlWebpackPlugin = require("html-webpack-plugin");
-const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { DefinePlugin } = require('webpack');
 const TerserPlugin = require("terser-webpack-plugin");
 
@@ -37,7 +39,7 @@ const config = {
     // Learn more about plugins from https://webpack.js.org/configuration/plugins/
     new DefinePlugin({
       'process.env.DEVELOPMENT': !isProduction,
-      'process.env.API_ORIGIN': JSON.stringify(process.env.API_ORIGIN ?? '')
+      'process.env.API_ORIGIN': JSON.stringify(process.env.API_ORIGIN ?? ''),
     })
   ],
   module: {

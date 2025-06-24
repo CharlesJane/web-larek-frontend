@@ -18,63 +18,58 @@ export interface IProduct {
     price: number | null;
 }
 
-export interface IBasketItem extends IProduct {
-    quantity: number; // расширяем тип для корзины, храним число товаров в ней
-}
-
-export interface IBasketData {
-    items: IBasketItem[];
-    total: number;
-}
-
-export interface IOrder {
+export interface IUserOrder {
     payment: string;
     email: string;
     phone: string;
     address: string;
 }
 
-// export interface IOrderData { // данные, уходящие к серверу для оформления заказа
-//     payment: string;
-//     email: string;
-//     phone: string;
-//     address: string;
-//     total: number;
-//     items: IBasketItem[];
-// }
+export interface IOrderData { // данные, уходящие к серверу для оформления заказа
+    payment: string;
+    email: string;
+    phone: string;
+    address: string;
+    total: number;
+    items: IProduct[];
+}
 
 export interface IFormState {
     values: Record<string, string>; // храним текущие значения полей
     errors: string | null ; // сохраняем результат валидации
 }
 
-export type TOrderData = IProductsList & IOrder;
-
 export type TProductBase = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>;
 
 export type TProductBasket = Pick<IProduct, 'title' | 'price'>;
 
-export type TOrderInfo = Pick<IOrder, 'payment' | 'address'>;
+export type TOrderInfo = Pick<IUserOrder, 'payment' | 'address'>;
 
-export type TOrderContacts = Pick<IOrder, 'email' | 'phone'>;
+export type TOrderContacts = Pick<IUserOrder, 'email' | 'phone'>;
 
 // Модели бизнес-логики
 
 export interface IProductsModel {
-    total: number;
     items: IProduct[];
     getProduct(productId: string): IProduct | undefined;
-    addProduct(product: IProduct): void;
-    deleteProduct(productId: string): void;
 }
 
 export interface IBasketModel {
-    total: number;
-    items: IBasketItem[];
+    items: IProduct[];
+    addProduct(product: IProduct): void;
+    deleteProduct(productId: string): void;
+    clear(): void;
+    getCount(): number;
+    getTotal(): number;
+    hasProduct(productId: string): boolean;
 }
 
-export interface IOrderModel {
-    orderData: IOrder;
+export interface IUserOrderModel {
+    orderData: IUserOrder;
+    updateOrder(newData: Partial<IUserOrder>): void;
+    validate(): boolean;
+    clearOrderData(): void;
+    getValidatedData(): IUserOrder | null;
 }
 
 // Компоненты отображения
@@ -108,12 +103,12 @@ export interface IBasketPresenter {
     addItem(product: IProduct): void;
     removeItem(productId: ID): void;
     updateQuantity(productId: ID, quantity: number): void;
-    getBasketData(): TOrderData;
+    getBasketData(): IOrderData;
     getTotal(): number;
 }
 
 export interface IOrderPresenter {
-    setOrderInfo(orderData: {order: IOrder; basket: IBasketData;}): void; //собираем инфо о данных заказчика
+    setOrderInfo(orderData: {order: IUserOrder; basket: IProduct;}): void; //собираем инфо о данных заказчика
     checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo), string>): boolean; // валидируем отправляемые данные
     sendOrder(): Promise<void>; 
 }
@@ -121,14 +116,14 @@ export interface IOrderPresenter {
 // Состояния
 
 export interface IBasketState { // храним состояние корзины для дальнейшей работы с представлением
-    items: IBasketItem[];
+    items: IProduct[];
     total: number;
 }
 
 export interface IAppState { //храним общее состояние приложения
     products: IProductsModel;
     basket: IBasketState;
-    order: IOrderModel;
+    order: IUserOrderModel;
 }
 
 
