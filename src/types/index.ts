@@ -5,7 +5,6 @@
 export type ID = string;
 
 export interface IProductsList {
-    _total: number;
     _items: IProduct[];
 }
 
@@ -15,7 +14,7 @@ export interface IProduct {
     image: string;
     title: string;
     category: string;
-    price: number | null;
+    price: number;
 }
 
 export interface IUserOrder {
@@ -75,6 +74,16 @@ export interface IUserOrderModel {
 }
 
 // Компоненты отображения
+
+export interface IPage {
+    basketCounter: number;
+    gallery: HTMLElement[];
+    locked: boolean;
+}
+
+export interface IModalData {
+    content: HTMLElement;
+}
 
 export interface IProductCard {
     render(product: IProduct): HTMLElement;
