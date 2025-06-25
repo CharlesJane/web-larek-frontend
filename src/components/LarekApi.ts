@@ -1,4 +1,4 @@
-import { IProductsList, IProduct, IOrderData } from '../types';
+import { IProductsList, IProduct, IOrderData} from '../types';
 import { Api, ApiListResponse } from './base/api';
 
 export interface ILarekAPI {

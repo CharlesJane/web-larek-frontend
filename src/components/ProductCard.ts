@@ -1,108 +1,117 @@
-// #### Класс ProductCard 
-
-// Отвечает за отображение карточки, задавая в карточке данные названия, категории, изображения, описания и цены. Класс используется для отображения карточек на странице сайта и в модальных окнах.\
-// В конструктор класса передается DOM-элемент темплейта, что позволяет по необходимости формировать разные представления карточки в верстке. В классе устанавливаются слушатели на все интерактивные элементы, в результате взаимодействия с которыми генерируются соответствующие события.\
-// Поля класса содержать элементы разметки карточек. Конструктор, кроме темплейта, принимает экземпляр 'EventEmitter' для инициации событий.
-
-// Методы: 
-// - setProduct(productData: IProduct, productId: string): void - заполняет атрибуты элементов карточки данными
-// - isProductInBasket(productId: string): boolean - управляет элементом кнопки, отображая active/disabled состояния, в зависимости от наличия товара в корзине
-// - render(): HTMLElement - возвращает полностью заполненную карточку
-// - геттер id возвращает уникальный id карточки
-import { EventEmitter } from './base/events';
+import { ID } from "../types";
+import { ensureElement } from "../utils/utils";
 import { Component } from "./base/Component";
-import { ID, IProduct, TProductBase, TProductBasket } from "../types";
 
-interface ICardActions {
+export interface IProductCard {
+    id: ID;
+    title: string;
+    price: string;
+    description?: string;
+    image?: string;
+    category?: string;
+}
+
+export class ProductCard extends Component<IProductCard> {
+    protected _id: ID;
+    protected _title: HTMLHeadingElement;
+    protected _price: HTMLSpanElement;
+    protected _description?: HTMLParagraphElement;
+    protected _image?: HTMLImageElement;
+    protected _category?: HTMLSpanElement;
+    protected _button?: HTMLButtonElement;
+
+    constructor(container: HTMLElement) {
+        super(container);
+
+        this._title = ensureElement<HTMLHeadingElement>('.card__title', container);
+        this._price = ensureElement<HTMLSpanElement>('.card__price', container);
+        this._description = container.querySelector('.card__text');
+        this._image = ensureElement<HTMLImageElement>('.card__image', container);
+        this._category = container.querySelector('.card__category');
+    }
+
+    // set id(value: string) {
+    //     this.container.dataset.id = value;
+    // }
+
+    get id(): string {
+        return this.container.dataset.id || '';
+    }
+
+    set title(value: string) {
+        this.setText(this._title, value);
+    }
+
+    set price(value: string) {
+        this.setText(this._price, `${value} синапсов`);
+    }
+
+    set description(value: string) {
+        this.setText(this._description, value);
+    }
+
+    set image(value: string) {
+        this.setImage(this._image, value, this.title)
+    }
+
+    get category(): string {
+        return this.container.dataset.category || '';
+    }
+
+    set category(value: string) {
+        this.setText(this._category, value);
+    }
+}
+
+interface GalleryActions {
     onClick: (event: MouseEvent) => void;
 }
 
-
-export class ProductCard<T> extends Component<T>{
-    protected events: EventEmitter;
-    protected cardId: ID;
-    protected cardTitle: HTMLHeadingElement;
-    protected cardPrice: HTMLSpanElement;
-    protected _cardImage?: HTMLImageElement;
-    protected cardCategory?: HTMLSpanElement;
-    protected cardDescription?: HTMLParagraphElement;
-    protected cardButton?: HTMLButtonElement;
-
-
-    constructor(protected container: HTMLElement, events: EventEmitter, actions?: ICardActions) {
-        super(container);
-        this.events = events;
-
-		this.cardTitle = this.container.querySelector('.card__title');
-		this.cardPrice = this.container.querySelector('.card__price');
-		this._cardImage = this.container.querySelector('.card__image');
-        this.cardCategory = this.container.querySelector('.card__category');
-		this.cardDescription = this.container.querySelector('.card__text');
-
-        if (actions?.onClick) {
-            if (this.cardButton) {
-                this.cardButton.addEventListener('click', actions.onClick);
-            } else {
-                container.addEventListener('click', actions.onClick);
-            }
-        }
-    }
-
-    set description(text: string) {
-        this.cardDescription.textContent = text;
-    };
-    
-    set title(heading: string) {
-        this.cardTitle.textContent = heading;
-    };
-
-    set category(type: string) {
-        this.cardCategory.textContent = type;
-    }
-
-    set price(amount: number) {
-        this.cardPrice.textContent = `${amount} синопсов`;
-    }
-
-    set image(path: string) {
-        this.setImage(this._cardImage, path, this.cardTitle.textContent)
-    }
-
-	get id() {
-		return this.cardId;
-	}
-
-    set id(id) {
-		this.cardId = id;
-	}
-
-    setButtonClickHandler(handler: () => void): void {
-        if (this.cardButton) {
-            this.cardButton.addEventListener('click', handler);
-        }
-    }
-}
-
-export class CatalogProductCard extends ProductCard<TProductBase> {
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container, events);
+export class GalleryProductCard extends ProductCard {
+    constructor(container: HTMLElement, actions?: GalleryActions) {
+        super(container)
+        this._button = ensureElement<HTMLButtonElement>('gallery__item', container)
         
-        this.cardButton = container.querySelector('.gallery__item');
+        this._button.addEventListener('click', (event) => {
+            event.preventDefault();
+            actions.onClick;
+        });
+    }
+
+}
+
+interface PreviewActions {
+    onClick: (event: MouseEvent) => void;
+}
+
+export class PreviewProductCard extends ProductCard {
+    constructor(container: HTMLElement, actions?: PreviewActions) {
+        super(container);
+        this._button = ensureElement<HTMLButtonElement>('card__button', container)
+
+        this._button.addEventListener('cardToBasket:add', (event: MouseEvent) => {
+            actions?.onClick?.(event);
+        })
     }
 }
 
-export class PreviewProductCard extends ProductCard<IProduct> {
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container, events);
-
-        this.cardButton = container.querySelector('.card__button');
-    }
+interface BasketCardActions {
+    onClick: (event: MouseEvent) => void;
 }
 
-export class BasketProductCard extends ProductCard<TProductBasket> {
-    constructor(container: HTMLElement, events: EventEmitter) {
-        super(container, events);
+export class BasketProductCard extends ProductCard {
+    protected _index: HTMLSpanElement;
+    constructor(container: HTMLElement, actions?: BasketCardActions) {
+        super(container);
+        this._index = ensureElement<HTMLSpanElement>('basket__item-index', container)
+        this._button = ensureElement<HTMLButtonElement>('basket__item-delete', container)
 
-        this.cardButton = container.querySelector('.basket__item-delete .card__button');
+        this._button.addEventListener('card:delete', (event: MouseEvent) => {
+            actions?.onClick?.(event);
+        })
+    }
+
+    set index(value: string) {
+        this.setText(this._index, value);
     }
 }

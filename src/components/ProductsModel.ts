@@ -5,7 +5,7 @@ export class ProductsModel implements IProductsModel {
     //     Класс отвечает за хранение карточек товаров.
     // Конструктор класса принимает экземпляр брокера событий.
     // В полях класса хранятся следующие данные:
-    items: IProduct[] = [];
+    _items: IProduct[] = [];
     protected events: IEvents;
 
     constructor(events: IEvents) {
@@ -13,15 +13,15 @@ export class ProductsModel implements IProductsModel {
     }
 
     setItems(productArray: IProduct[]) {
-        this.items = productArray;
+        this._items = productArray;
     }
 
     getItems() {
-        return this.items;
+        return this._items;
     }
 
     // Метод для получения карточки по ID
     getProduct(id: string): IProduct | undefined {
-        return this.items.find(product => product.id === id);
+        return this._items.find(product => product.id === id);
     }
 }

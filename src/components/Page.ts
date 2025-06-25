@@ -1,10 +1,15 @@
-import { Component } from "./base/Component";
-import { EventEmitter, IEvents } from "./base/events";
 import { ensureElement } from "../utils/utils";
-import { IPage } from "../types";
+import { Component } from "./base/Component";
+import { IEvents } from "./base/events";
+
+interface IPage {
+    counter: number;
+    catalog: HTMLElement[];
+    locked: boolean;
+}
 
 export class Page extends Component<IPage> {
-    protected _basketCounter: HTMLElement;
+    protected _counter: HTMLElement;
     protected _gallery: HTMLElement;
     protected _wrapper: HTMLElement;
     protected _basket: HTMLElement;
@@ -13,22 +18,23 @@ export class Page extends Component<IPage> {
     constructor(container: HTMLElement, protected events: IEvents) {
         super(container);
 
-        this._basketCounter = ensureElement<HTMLElement>('.header__basket-counter');
+        this._counter = ensureElement<HTMLElement>('.header__basket-counter');
         this._gallery = ensureElement<HTMLElement>('.gallery');
         this._wrapper = ensureElement<HTMLElement>('.page__wrapper');
         this._basket = ensureElement<HTMLElement>('.header__basket');
 
         this._basket.addEventListener('click', () => {
-            this.events.emit('preview:open');
+            this.events.emit('basket:open');
         });
     }
 
-    set basketCounter(value: number) {
-        this.setText(this._basketCounter, String(value));
+    set counter(value: number) {
+        this.setText(this._counter, String(value));
     }
 
-    set gallery(items: HTMLElement[]) {
-        this._gallery.replaceChildren(...items);
+    set catalog(items: HTMLElement[]) {
+        this._gallery.replaceChildren(...items);  
+        this.events.emit('catalog:set')
     }
 
     set locked(value: boolean) {

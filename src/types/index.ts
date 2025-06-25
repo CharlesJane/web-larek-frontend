@@ -49,7 +49,7 @@ export type TOrderContacts = Pick<IUserOrder, 'email' | 'phone'>;
 // Модели бизнес-логики
 
 export interface IProductsModel {
-    items: IProduct[];
+    _items: IProduct[];
     setItems(productArray: IProduct[]): void;
     getItems(): IProduct[];
     getProduct(productId: string): IProduct | undefined;
@@ -75,67 +75,30 @@ export interface IUserOrderModel {
 
 // Компоненты отображения
 
-export interface IPage {
-    basketCounter: number;
-    gallery: HTMLElement[];
-    locked: boolean;
+export interface IOrderPaymentForm {
+    paymentMethod: string;
+    address: string;
 }
 
-export interface IModalData {
-    content: HTMLElement;
+export interface IOrderContactsForm {
+    email: string;
+    phone: string;
 }
 
-export interface IProductCard {
-    render(product: IProduct): HTMLElement;
+export interface IOrderPayment extends IOrderPaymentForm {
+    items: string[]
 }
 
-export interface IProductsView {
-    renderProducts(): void; // рендерим список карточек
-    renderPreview(productId: ID): void; // рендерим превью выбранной карточки
-}
-
-export interface IBasketView {
-    renderItems(): void;
-    renderTotal(): void;
-}
-
-export interface IOrderView {
-    renderForm(): void;
+export interface IOrderContacts extends IOrderContactsForm {
+    items: string[]
 }
 
 // Презентер - управление данными
 
-export interface IProductsPresenter {
-    setPreview(productId: ID): void;
-    getPreview(): ID | null; // сюда уходит id выбранной карточки
-}
 
-export interface IBasketPresenter {
-    addItem(product: IProduct): void;
-    removeItem(productId: ID): void;
-    updateQuantity(productId: ID, quantity: number): void;
-    getBasketData(): IOrderData;
-    getTotal(): number;
-}
-
-export interface IOrderPresenter {
-    setOrderInfo(orderData: {order: IUserOrder; basket: IProduct;}): void; //собираем инфо о данных заказчика
-    checkOrderInfoValidation(data: Record<keyof (TOrderContacts | TOrderInfo), string>): boolean; // валидируем отправляемые данные
-    sendOrder(): Promise<void>; 
-}
 
 // Состояния
 
-export interface IBasketState { // храним состояние корзины для дальнейшей работы с представлением
-    items: IProduct[];
-    total: number;
-}
-
-export interface IAppState { //храним общее состояние приложения
-    products: IProductsModel;
-    basket: IBasketState;
-    order: IUserOrderModel;
-}
 
 
 

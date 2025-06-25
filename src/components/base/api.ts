@@ -3,7 +3,6 @@ export type ApiListResponse<Type> = {
     items: Type[];
 };
 
-
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export class Api {
