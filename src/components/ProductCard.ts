@@ -1,8 +1,8 @@
-import { ID } from "../types";
+import { ID, IProduct } from "../types";
 import { ensureElement } from "../utils/utils";
 import { Component } from "./base/Component";
 
-export interface IProductCard {
+export interface IProductCard<T> {
     id: ID;
     title: string;
     price: number;
@@ -11,7 +11,7 @@ export interface IProductCard {
     category?: string;
 }
 
-export class ProductCard extends Component<IProductCard> {
+export class ProductCard<T> extends Component<IProductCard<T>> {
     protected _id: ID;
     protected _title: HTMLHeadingElement;
     protected _price: HTMLSpanElement;
@@ -30,7 +30,7 @@ export class ProductCard extends Component<IProductCard> {
         this._title = ensureElement<HTMLHeadingElement>('.card__title', this.container);
         this._price = ensureElement<HTMLSpanElement>('.card__price', this.container);
         this._description = container.querySelector('.card__text');
-        this._image = ensureElement<HTMLImageElement>('.card__image', this.container);
+        this._image = container.querySelector('.card__image');
         this._category = container.querySelector('.card__category');
     }
 
@@ -74,7 +74,7 @@ interface GalleryActions {
     onClick: (event: MouseEvent) => void;
 }
 
-export class GalleryProductCard extends ProductCard {
+export class GalleryProductCard extends ProductCard<IProductCard<IProduct>> {
     constructor(container: HTMLElement, actions?: GalleryActions) {
         super(container)
         this._button = container as HTMLButtonElement;
@@ -91,16 +91,14 @@ interface PreviewActions {
     onClick: (event: MouseEvent) => void;
 }
 
-export class PreviewProductCard extends ProductCard {
+export class PreviewProductCard extends ProductCard<IProductCard<IProduct>> {
     constructor(container: HTMLElement, actions?: PreviewActions) {
         super(container);
         this._button = ensureElement<HTMLButtonElement>('.card__button', this.container)
 
-        this._button.addEventListener('cardToBasket:add', (event: MouseEvent) => {
-            if (actions?.onClick) {
-                actions.onClick(event);
-                this.setDisabled(this._button, true);
-            }
+        this._button.addEventListener('click', (event: MouseEvent) => {
+            actions?.onClick?.(event);
+            this.setDisabled(this._button, true)
         })
     }
 
@@ -113,19 +111,29 @@ interface BasketCardActions {
     onClick: (event: MouseEvent) => void;
 }
 
-export class BasketProductCard extends ProductCard {
+type TBasketCardType = Pick<IProduct, 'id' | 'title'| 'price'>
+
+export class BasketProductCard extends ProductCard<TBasketCardType> {
     protected _index: HTMLSpanElement;
+    private _currentIndex = 0;
+
     constructor(container: HTMLElement, actions?: BasketCardActions) {
         super(container);
-        this._index = ensureElement<HTMLSpanElement>('.basket__item-index', this.container)
-        this._button = ensureElement<HTMLButtonElement>('.basket__item-delete', this.container)
 
-        this._button.addEventListener('card:delete', (event: MouseEvent) => {
+        this._index = ensureElement<HTMLSpanElement>('.basket__item-index', this.container);
+        this._button = ensureElement<HTMLButtonElement>('.basket__item-delete', this.container);
+        
+        this._button.addEventListener('click', (event: MouseEvent) => {
             actions?.onClick?.(event);
-        })
+        });
     }
 
-    set index(value: string) {
-        this.setText(this._index, value);
+    set index(value: number) {
+        this._currentIndex = value;
+        this.setText(this._index, String(value));
+    }
+
+    get index(): number {
+        return this._currentIndex;
     }
 }

@@ -16,6 +16,8 @@ export class BasketView extends Component<IBasketView> {
     constructor(container: HTMLElement, events: IEvents) {
         super(container);
 
+        this.events = events;
+
         this._basketList = ensureElement<HTMLElement>('.basket__list', this.container);
         this._totalPrice = ensureElement<HTMLSpanElement>('.basket__price', container);
         this._buttonOrder = ensureElement<HTMLButtonElement>('.button', container);
@@ -41,5 +43,9 @@ export class BasketView extends Component<IBasketView> {
 
     set totalPrice(total: number) {
         this.setText(this._totalPrice, `${total} синапсов`);
+    }
+
+    clear() {
+        this.items = [];
     }
 }

@@ -1,9 +1,9 @@
-import { IProduct, IBasketModel } from "../types";
+import { IProduct, IBasketModel, TProductBasket } from "../types";
 import { IEvents } from "./base/events";
 
 
 export class BasketModel implements IBasketModel {
-    private _items: IProduct[] = [];
+    private _items: TProductBasket[] = [];
     protected events: IEvents;
     
     constructor(events: IEvents) {
@@ -11,12 +11,12 @@ export class BasketModel implements IBasketModel {
     }
 
     // Метод получения всех товаров
-    get items(): IProduct[] {
+    get items(): TProductBasket[] {
         return this._items;
     }
 
     // Метод добавления товара в корзину
-    addProduct(product: IProduct): void {
+    addProduct(product: TProductBasket): void {
         if (this.hasProduct(product.id)) {
             console.log(`Товар с ID ${product.id} уже добавлен`);
             return;
@@ -25,6 +25,7 @@ export class BasketModel implements IBasketModel {
         this._items.push(product);
         this.events.emit('basket:added', product);
     }
+
     // Метод удаления товара из корзины по ID
     deleteProduct(productId: string): void {
         this._items = this.items.filter(item => item.id !== productId);

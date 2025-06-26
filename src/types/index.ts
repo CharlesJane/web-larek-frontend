@@ -40,7 +40,7 @@ export interface IFormState {
 
 export type TProductBase = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>;
 
-export type TProductBasket = Pick<IProduct, 'title' | 'price'>;
+export type TProductBasket = Pick<IProduct, 'id' | 'title' | 'price'>;
 
 export type TOrderInfo = Pick<IUserOrder, 'payment' | 'address'>;
 
@@ -56,7 +56,7 @@ export interface IProductsModel {
 }
 
 export interface IBasketModel {
-    items: IProduct[];
+    items: TProductBasket[];
     addProduct(product: IProduct): void;
     deleteProduct(productId: string): void;
     clear(): void;
