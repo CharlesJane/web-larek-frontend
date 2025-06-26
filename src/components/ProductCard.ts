@@ -5,7 +5,7 @@ import { Component } from "./base/Component";
 export interface IProductCard {
     id: ID;
     title: string;
-    price: string;
+    price: number;
     description?: string;
     image?: string;
     category?: string;
@@ -23,16 +23,23 @@ export class ProductCard extends Component<IProductCard> {
     constructor(container: HTMLElement) {
         super(container);
 
-        this._title = ensureElement<HTMLHeadingElement>('.card__title', container);
-        this._price = ensureElement<HTMLSpanElement>('.card__price', container);
+        if (!container) {
+            console.log('Контейнер компонента не может быть undefined');
+        }
+
+        this._title = ensureElement<HTMLHeadingElement>('.card__title', this.container);
+        this._price = ensureElement<HTMLSpanElement>('.card__price', this.container);
         this._description = container.querySelector('.card__text');
-        this._image = ensureElement<HTMLImageElement>('.card__image', container);
+        this._image = ensureElement<HTMLImageElement>('.card__image', this.container);
         this._category = container.querySelector('.card__category');
     }
 
-    // set id(value: string) {
-    //     this.container.dataset.id = value;
-    // }
+    set id(value: ID) {
+        if (!this.container) {
+            console.log('Контейнер не инициализирован');
+        }
+        this.container.dataset.id = value;
+    }
 
     get id(): string {
         return this.container.dataset.id || '';
@@ -42,7 +49,7 @@ export class ProductCard extends Component<IProductCard> {
         this.setText(this._title, value);
     }
 
-    set price(value: string) {
+    set price(value: number) {
         this.setText(this._price, `${value} синапсов`);
     }
 
@@ -70,11 +77,12 @@ interface GalleryActions {
 export class GalleryProductCard extends ProductCard {
     constructor(container: HTMLElement, actions?: GalleryActions) {
         super(container)
-        this._button = ensureElement<HTMLButtonElement>('gallery__item', container)
+        this._button = container as HTMLButtonElement;
+        
         
         this._button.addEventListener('click', (event) => {
             event.preventDefault();
-            actions.onClick;
+            actions?.onClick?.(event);
         });
     }
 
@@ -87,7 +95,7 @@ interface PreviewActions {
 export class PreviewProductCard extends ProductCard {
     constructor(container: HTMLElement, actions?: PreviewActions) {
         super(container);
-        this._button = ensureElement<HTMLButtonElement>('card__button', container)
+        this._button = ensureElement<HTMLButtonElement>('card__button', this.container)
 
         this._button.addEventListener('cardToBasket:add', (event: MouseEvent) => {
             actions?.onClick?.(event);
@@ -103,8 +111,8 @@ export class BasketProductCard extends ProductCard {
     protected _index: HTMLSpanElement;
     constructor(container: HTMLElement, actions?: BasketCardActions) {
         super(container);
-        this._index = ensureElement<HTMLSpanElement>('basket__item-index', container)
-        this._button = ensureElement<HTMLButtonElement>('basket__item-delete', container)
+        this._index = ensureElement<HTMLSpanElement>('basket__item-index', this.container)
+        this._button = ensureElement<HTMLButtonElement>('basket__item-delete', this.container)
 
         this._button.addEventListener('card:delete', (event: MouseEvent) => {
             actions?.onClick?.(event);

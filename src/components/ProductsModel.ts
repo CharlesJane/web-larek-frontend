@@ -14,6 +14,7 @@ export class ProductsModel implements IProductsModel {
 
     setItems(productArray: IProduct[]) {
         this._items = productArray;
+        this.events.emit('items:changed', { items: this._items });
     }
 
     getItems() {
