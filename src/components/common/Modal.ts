@@ -9,13 +9,12 @@ export interface IModal {
 export class Modal extends Component<IModal> {
     protected _closeButton: HTMLButtonElement;
     protected _content: HTMLElement;
-    protected events: IEvents;
 
-    constructor(container: HTMLElement, events: IEvents) {
+    constructor(container: HTMLElement, protected events: IEvents) {
         super(container);
-        this._closeButton = ensureElement<HTMLButtonElement>('.modal__close');
-        this._content = ensureElement<HTMLElement>('.modal__content');
-        this.events = events;
+
+        this._closeButton = ensureElement<HTMLButtonElement>('.modal__close', container);
+        this._content = ensureElement<HTMLElement>('.modal__content', container);
 
         this._closeButton.addEventListener('click', this.close.bind(this));
         this.container.addEventListener('click', this.close.bind(this));
@@ -33,12 +32,16 @@ export class Modal extends Component<IModal> {
 
     close() {
         this.container.classList.remove('modal_active');
-        this.content = null;
+        this._content.replaceChildren();
         this.events.emit('modal:close');
     }
-
+    
     render(data: IModal): HTMLElement {
+        console.log('Рендер модального окна');
+        console.log('Полученный контент:', data.content);
+
         super.render(data);
+
         this.open();
         return this.container;
     }

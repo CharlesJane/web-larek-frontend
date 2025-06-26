@@ -58,7 +58,7 @@ export class ProductCard extends Component<IProductCard> {
     }
 
     set image(value: string) {
-        this.setImage(this._image, value, this.title)
+        this.setImage(this._image, value, this.title);
     }
 
     get category(): string {
@@ -85,7 +85,6 @@ export class GalleryProductCard extends ProductCard {
             actions?.onClick?.(event);
         });
     }
-
 }
 
 interface PreviewActions {
@@ -95,11 +94,18 @@ interface PreviewActions {
 export class PreviewProductCard extends ProductCard {
     constructor(container: HTMLElement, actions?: PreviewActions) {
         super(container);
-        this._button = ensureElement<HTMLButtonElement>('card__button', this.container)
+        this._button = ensureElement<HTMLButtonElement>('.card__button', this.container)
 
         this._button.addEventListener('cardToBasket:add', (event: MouseEvent) => {
-            actions?.onClick?.(event);
+            if (actions?.onClick) {
+                actions.onClick(event);
+                this.setDisabled(this._button, true);
+            }
         })
+    }
+
+    getContainer(): HTMLElement {
+        return this.container;
     }
 }
 
@@ -111,8 +117,8 @@ export class BasketProductCard extends ProductCard {
     protected _index: HTMLSpanElement;
     constructor(container: HTMLElement, actions?: BasketCardActions) {
         super(container);
-        this._index = ensureElement<HTMLSpanElement>('basket__item-index', this.container)
-        this._button = ensureElement<HTMLButtonElement>('basket__item-delete', this.container)
+        this._index = ensureElement<HTMLSpanElement>('.basket__item-index', this.container)
+        this._button = ensureElement<HTMLButtonElement>('.basket__item-delete', this.container)
 
         this._button.addEventListener('card:delete', (event: MouseEvent) => {
             actions?.onClick?.(event);

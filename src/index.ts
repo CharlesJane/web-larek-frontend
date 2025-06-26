@@ -4,11 +4,13 @@ import { EventEmitter } from './components/base/events';
 import { API_URL, CDN_URL } from './utils/constants';
 import { UserOrderModel } from './components/UserOrderModel';
 import { Modal } from './components/common/Modal';
-import { cloneTemplate, ensureElement } from './utils/utils';
+import { cloneTemplate, createElement, ensureElement } from './utils/utils';
 import { ProductsModel } from './components/ProductsModel';
 import { BasketModel } from './components/BasketModel';
 import { Page } from './components/Page';
-import { GalleryProductCard } from './components/ProductCard';
+import { GalleryProductCard, PreviewProductCard } from './components/ProductCard';
+import { IProduct, ID } from './types';
+import { BasketView } from './components/common/BasketView';
 
 const events = new EventEmitter();
 
@@ -25,8 +27,11 @@ const basketData = new BasketModel(events);
     // const orderData = new UserOrderModel(events);
 
 // Глобальные контейнеры
+const modalContainer = ensureElement<HTMLElement>('#modal-container');
 const page = new Page(document.body, events);
-const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
+const modal = new Modal(modalContainer, events);
+
+
 
 // Все шаблоны
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
@@ -36,6 +41,8 @@ const basketCardTemplate = ensureElement<HTMLTemplateElement>('#card-basket');
 const basketTemplate = ensureElement<HTMLTemplateElement>('#basket');
 const orderPaymentTemplate = ensureElement<HTMLTemplateElement>('#order');
 const orderContactsTemplate = ensureElement<HTMLTemplateElement>('#contacts');
+
+const basket = new BasketView(cloneTemplate(basketTemplate), events);
 
 // Получаем товары с сервера
 Promise.all([api.getProductsList()])
@@ -50,22 +57,15 @@ Promise.all([api.getProductsList()])
         console.error("Ошибка получения карточек с сервера:", err);
     });
 
+// Выводим карточки на страницу
+
 events.on('productsList:loaded', () => {
 	page.catalog = productsData._items.map((card) => {
-        if (!card || !card.id) {
-            console.error('Некорректные данные карточки:', card);
-            return;
-        }
-
-        console.log(card);
-        console.log(galleryCardTemplate);
 
         const cardElement = cloneTemplate<HTMLElement>(galleryCardTemplate);
         const cardInstant = new GalleryProductCard(cardElement, {
             onClick: () => events.emit('card:select', card)
         });
-
-        console.log(cardInstant);
 		return cardInstant.render({
             id: card.id,
             title: card.title,
@@ -77,6 +77,54 @@ events.on('productsList:loaded', () => {
 
     page.counter = basketData.getCount();
 });
+
+// Открываем модалку с превью карточки
+
+events.on('card:select', (item: IProduct) => {
+    const previewCard = new PreviewProductCard(
+        cloneTemplate(previewCardTemplate),
+        {
+            onClick: () => {
+                events.emit('cardToBasket:add', item);
+            }
+        }
+    );
+
+    previewCard.render({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        image: item.image,
+        description: item.description,
+        category: item.category
+    });
+    
+    modal.render({
+        content: previewCard.getContainer()
+    });
+});
+
+// Обработчик добавления в корзину - не работает
+events.on('cardToBasket:add', (item: IProduct) => {
+    basketData.addProduct(item);
+    page.counter = basketData.getCount();
+    console.log('Товар добавлен в корзину:', item);
+
+    const thisCardButton = ensureElement<HTMLButtonElement>('.card__button');
+
+    if (thisCardButton) {
+        thisCardButton.disabled = true;
+    }
+});
+
+// Открываем модалку с корзиной 
+
+events.on('basket:open', () => {
+    modal.render({
+        content: basket.render()
+        })
+    });
+
 
 // Блокируем прокрутку страницы если открыта модалка
 events.on('modal:open', () => {

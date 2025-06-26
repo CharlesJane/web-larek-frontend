@@ -6,6 +6,7 @@ export class ProductsModel implements IProductsModel {
     // Конструктор класса принимает экземпляр брокера событий.
     // В полях класса хранятся следующие данные:
     _items: IProduct[] = [];
+    preview: string | null;
     protected events: IEvents;
 
     constructor(events: IEvents) {
@@ -24,5 +25,9 @@ export class ProductsModel implements IProductsModel {
     // Метод для получения карточки по ID
     getProduct(id: string): IProduct | undefined {
         return this._items.find(product => product.id === id);
+    }
+
+    setPreview(item: IProduct) {
+        this.preview = item.id;
     }
 }
