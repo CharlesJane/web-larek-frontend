@@ -45,12 +45,11 @@ export class UserOrderModel implements IUserOrderModel {
             errors.address = 'Необходимо указать адрес';
         }
 
-        if (!this.order.payment === null) {
+        if (!this.order.payment) {
             errors.payment = 'Необходимо указать вид оплаты';
         }
 
         this.formErrors = errors;
-        this.events.emit('formErrors:change', this.formErrors);
 
         return errors;
     }

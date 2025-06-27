@@ -32,7 +32,7 @@ export abstract class OrderForm<T> extends Component<IOrderForm> {
     }
 
     protected onInputChange(field: keyof T, value: string) {
-        this.events.emit(`${this.container.name}.${String(field)}:change`, {
+        this.events.emit(`form:change`, {
             field,
             value
         });
@@ -46,7 +46,11 @@ export abstract class OrderForm<T> extends Component<IOrderForm> {
         this.setText(this._errorSpan, value);
     }
     
-    render(state: Partial<T> & IOrderForm) {
+    render(state?: Partial<T & IOrderForm>) {
+        if (!state) {
+            return this.container;
+        }
+
         const {valid, errors, ...inputs} = state;
 
         super.render({valid, errors});

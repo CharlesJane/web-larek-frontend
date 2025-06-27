@@ -18,9 +18,9 @@ const events = new EventEmitter();
 const api = new LarekAPI(CDN_URL, API_URL);
 
 // Чтобы мониторить все события, для отладки
-events.onAll(({ eventName, data }) => {
-    console.log(eventName, data);
-})
+// events.onAll(({ eventName, data }) => {
+//     console.log(eventName, data);
+// })
 
 // Все шаблоны
 const successTemplate = ensureElement<HTMLTemplateElement>('#success');
@@ -40,15 +40,6 @@ const orderData = new UserOrderModel({
     phone: '',
     address: ''
 }, events);
-
-const orderDataComplete: IOrderData = {
-    payment: '',
-    email: '',
-    phone: '',
-    address: '',
-    total: 0,
-    items: []
-}
 
 // Глобальные контейнеры
 const modal = new Modal(ensureElement<HTMLElement>('#modal-container'), events);
@@ -133,17 +124,6 @@ const updateBasket = () => {
     page.counter = basketData.getCount();
 };
 
-const getBasketData = () => {
-    const productsIds = basketData.getProductIds();
-    console.log(productsIds);
-
-    const total = basketData.getTotal();
-    return {
-        items: productsIds,
-        total: total
-    };
-};
-
 // Обработчик добавления в корзину
 events.on('cardToBasket:add', (item: TProductBasket) => {
     basketData.addProduct(item);
@@ -158,7 +138,6 @@ events.on('basketProduct:deleted', (card: TProductBasket) => {
 });
 
 // Открываем модалку с корзиной 
-
 events.on('basket:open', () => {
     modal.render({
         content: basket.render()
@@ -166,137 +145,69 @@ events.on('basket:open', () => {
 });
 
 // Открываем модалку с формой оплаты 
-
 events.on('orderForm:open', () => {
-    const basketComplete = getBasketData();
-
-    orderDataComplete.items = basketComplete.items;
-    orderDataComplete.total = basketComplete.total;
-
     // Открываем модальное окно с формой
     modal.render({
-        content: orderPayment.render({
-            payment: null,
-            address: '',
-            valid: false,
-            errors: ''
-        })
+        content: orderPayment.render()
     });
 });
 
 // Открываем модалку с формой контактов 
-
-events.on('orderContacts:open', () => {
-    // Открываем модальное окно с формой
+events.on('order:submit', () => {
     modal.render({
-        content: orderContacts.render({
-            email: '',
-            phone: '',
-            valid: false,
-            errors: ''
-        })
+        content: orderContacts.render()
     });
 });
 
-// Изменилось состояние валидации формы
-events.on('formErrors:change', (errors: Partial<IUserOrder>) => {
-    const { email, phone, address, payment } = errors;
-    orderPayment.valid = !address && !payment;
-    orderContacts.valid = !email && !phone;
-
-    orderPayment.errors = Object.values({address, payment}).filter(i => !!i).join('; ');
-    orderContacts.errors = Object.values({phone, email}).filter(i => !!i).join('; ');
-});
-
 // Изменилось одно из полей
-events.on(/^order\..*:change/, (data: { field: keyof IUserOrder, value: string }) => {
+events.on('form:change', (data: { field: keyof IUserOrder, value: string }) => {
     orderData.setOrderField(data.field, data.value);
 });
 
-events.on('orderPayment:changed', (data) => {
-    const { payment, address } = orderData.validateOrder();
-    const valid = !address && !payment;
-    const errors = Object.values({address, payment}).filter(i => !!i).join('; ');
+// Валидация полей формы
+events.on('order:changed', (data: {field: keyof IUserOrder}) => {
+    if (data.field === 'payment' || data.field === 'address') {
+        const { payment, address } = orderData.validateOrder();
+        const valid = !address && !payment;
+        const errors = Object.values({address, payment}).filter(i => !!i).join('; ');
 
-    if (valid) {
-        orderDataComplete.payment = orderData.order.payment;
-        orderDataComplete.address = orderData.order.address;
+        orderPayment.render({
+            address: orderData.order.address,
+            payment: orderData.order.payment,
+            valid: valid,
+            errors: errors,
+        })
+    } else {
+        const { email, phone } = orderData.validateOrder();
+        const valid = !email && !phone;
+        const errors = Object.values({email, phone}).filter(i => !!i).join('; ');
+
+        orderContacts.render({
+            email: orderData.order.email,
+            phone: orderData.order.phone,
+            valid: valid,
+            errors: errors,
+        })
     }
-
-    orderPayment.render({
-        address: orderData.order.address,
-		payment: orderData.order.payment,
-		valid: valid,
-		errors: errors,
-    })
 })
-
-events.on('orderContacts:changed', (data) => {
-    const { email, phone } = orderData.validateOrder();
-    const valid = !email && !phone;
-    const errors = Object.values({email, phone}).filter(i => !!i).join('; ');
-
-    if (valid) {
-        orderDataComplete.email = orderData.order.email;
-        orderDataComplete.phone = orderData.order.phone;
-    }
-
-    orderContacts.render({
-        email: orderData.order.email,
-		phone: orderData.order.phone,
-		valid: valid,
-		errors: errors,
-    })
-})
-
-// Устанавливаем значения по сабмиту 
-
-events.on('orderpayment:set', (data:IOrderData) => {
-    // Получаем данные из события
-    const { payment, address } = data;
-    
-    // Обновляем orderDataComplete
-    orderDataComplete.payment = payment;
-    orderDataComplete.address = address;
-    
-    // Дополнительно можно обновить модель заказа
-    orderData.setOrderField('payment', payment);
-    orderData.setOrderField('address', address);
-});
-
-// Обработчик события установки данных контактов
-events.on('ordercontacts:set', (data:IOrderData) => {
-    const { email, phone } = data;
-    
-    // Обновляем orderDataComplete
-    orderDataComplete.email = email;
-    orderDataComplete.phone = phone;
-    
-    // Обновляем модель заказа
-    orderData.setOrderField('email', email);
-    orderData.setOrderField('phone', phone);
-});
 
 // Обновляем обработчик завершения заказа
 
-events.on('order:completed', () => {
-    if (!orderDataComplete.payment || !orderDataComplete.address ||
-        !orderDataComplete.email || !orderDataComplete.phone) {
-        console.error('Не все данные заказа заполнены');
-        return;
+events.on('contacts:submit', () => {
+    const orderDataComplete: IOrderData = {
+        ...orderData.orderData,
+        total: basketData.getTotal(),
+        items: basketData.getProductIds(),
     }
 
-    console.log('Отправляем заказ:', orderDataComplete);
     
     api.orderProducts(orderDataComplete)
         .then((response) => {
-            console.log('Заказ успешно обработан:', response);
             
             // Успешная обработка
             handleSuccess(response);
         })
         .catch((error) => {
-            console.error('Ошибка:', error);
             
             // Обработка разных типов ошибок
             if (error.status === 400) {
@@ -313,6 +224,7 @@ events.on('order:completed', () => {
         modal.render({
             content: success.render(res)
         });
+        success.totalPayed = res.total;
         basketData.clear();
         updateBasket();
         page.counter = 0;
@@ -346,7 +258,6 @@ events.on('modal:close', () => {
 
 api.getProductsList()
     .then((productsList) => {
-        console.log(productsList);
         productsData._items = productsList._items;
 
         events.emit('productsList:loaded');

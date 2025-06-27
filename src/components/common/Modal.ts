@@ -37,9 +37,6 @@ export class Modal extends Component<IModal> {
     }
     
     render(data: IModal): HTMLElement {
-        console.log('Рендер модального окна');
-        console.log('Полученный контент:', data.content);
-
         super.render(data);
 
         this.open();

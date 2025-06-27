@@ -23,10 +23,6 @@ export class ProductCard<T> extends Component<IProductCard<T>> {
     constructor(container: HTMLElement) {
         super(container);
 
-        if (!container) {
-            console.log('Контейнер компонента не может быть undefined');
-        }
-
         this._title = ensureElement<HTMLHeadingElement>('.card__title', this.container);
         this._price = ensureElement<HTMLSpanElement>('.card__price', this.container);
         this._description = container.querySelector('.card__text');
@@ -35,9 +31,6 @@ export class ProductCard<T> extends Component<IProductCard<T>> {
     }
 
     set id(value: ID) {
-        if (!this.container) {
-            console.log('Контейнер не инициализирован');
-        }
         this.container.dataset.id = value;
     }
 
@@ -50,7 +43,12 @@ export class ProductCard<T> extends Component<IProductCard<T>> {
     }
 
     set price(value: number) {
-        this.setText(this._price, `${value} синапсов`);
+        if (value !== null) {
+            this.setText(this._price, `${value} синапсов`);
+        } else {
+            this.setText(this._price, `0 синапсов`);
+        }
+        
     }
 
     set description(value: string) {

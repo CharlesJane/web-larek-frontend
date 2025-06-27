@@ -88,12 +88,4 @@ export interface ISuccess {
     total: number;
 } 
 
-// Презентер - управление данными
-
-
-
-// Состояния
-
-
-
 
