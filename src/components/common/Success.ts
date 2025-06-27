@@ -16,7 +16,7 @@ export class Success extends Component<ISuccess> {
     constructor(container: HTMLElement, actions: ISuccessActions) {
         super(container);
 
-        this._closeButton = ensureElement<HTMLElement>('.state__action', this.container);
+        this._closeButton = ensureElement<HTMLElement>('.order-success__close', this.container);
         this._totalPayed = ensureElement<HTMLParagraphElement>('.order-success__description', this.container)
 
         if (actions?.onClick) {
@@ -26,5 +26,9 @@ export class Success extends Component<ISuccess> {
 
     set totalPayed(total: number) {
         this.setText(this._totalPayed, `Списано ${total} синапсов`);
+    }
+    
+    getContainer(): HTMLElement {
+        return this.container;
     }
 }

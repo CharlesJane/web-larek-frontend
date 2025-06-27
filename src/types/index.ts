@@ -17,7 +17,7 @@ export interface IProduct {
     price: number;
 }
 
-export interface IUserOrder {
+export interface IUserOrder { // данные, уходящие к серверу для оформления заказа
     payment: string;
     email: string;
     phone: string;
@@ -30,21 +30,12 @@ export interface IOrderData { // данные, уходящие к сервер�
     phone: string;
     address: string;
     total: number;
-    items: IProduct[];
+    items: string[];
 }
-
-export interface IFormState {
-    values: Record<string, string>; // храним текущие значения полей
-    errors: string | null ; // сохраняем результат валидации
-}
-
-export type TProductBase = Pick<IProduct, 'image' | 'title' | 'category' | 'price'>;
 
 export type TProductBasket = Pick<IProduct, 'id' | 'title' | 'price'>;
 
-export type TOrderInfo = Pick<IUserOrder, 'payment' | 'address'>;
-
-export type TOrderContacts = Pick<IUserOrder, 'email' | 'phone'>;
+export type FormErrors = Partial<Record<keyof IUserOrder, string>>;
 
 // Модели бизнес-логики
 
@@ -66,17 +57,16 @@ export interface IBasketModel {
 }
 
 export interface IUserOrderModel {
-    orderData: IUserOrder;
-    updateOrder(newData: Partial<IUserOrder>): void;
-    validate(): boolean;
-    clearOrderData(): void;
-    getValidatedData(): IUserOrder | null;
+    order: IUserOrder;
+    validateOrder(): FormErrors;
+    initOrder(): void;
+    setOrderField(field: keyof IUserOrder, value: string): void;
 }
 
 // Компоненты отображения
 
 export interface IOrderPaymentForm {
-    paymentMethod: string;
+    payment: string;
     address: string;
 }
 
@@ -86,12 +76,17 @@ export interface IOrderContactsForm {
 }
 
 export interface IOrderPayment extends IOrderPaymentForm {
-    items: string[]
+    items: string[];
 }
 
 export interface IOrderContacts extends IOrderContactsForm {
-    items: string[]
+    items: string[];
 }
+
+export interface ISuccess {
+    id: ID;
+    total: number;
+} 
 
 // Презентер - управление данными
 

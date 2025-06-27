@@ -3,19 +3,20 @@ import { Component } from "../base/Component";
 import { IEvents } from "../base/events";
 
 export interface IOrderForm {
-    errorSpan: HTMLSpanElement;
+    errors: string;
     valid: boolean;
 }
 
-export class OrderForm<T> extends Component<IOrderForm> {
-    protected _errorSpan: HTMLSpanElement;
+export abstract class OrderForm<T> extends Component<IOrderForm> {
+    protected _errorSpan: HTMLElement;
     protected _buttonSubmit: HTMLButtonElement;
 
     constructor(protected container: HTMLFormElement, protected events: IEvents) {
         super(container);
 
         this._buttonSubmit = ensureElement<HTMLButtonElement>('.button[type=submit]', this.container);
-        this._errorSpan = ensureElement<HTMLSpanElement>('.form__errors', this.container);
+        this._errorSpan = ensureElement<HTMLElement>('.form__errors', this.container);
+        
 
         this.container.addEventListener('input', (evt: Event) => {
             const target = evt.target as HTMLInputElement;
@@ -44,11 +45,11 @@ export class OrderForm<T> extends Component<IOrderForm> {
     set errors(value: string) {
         this.setText(this._errorSpan, value);
     }
-
+    
     render(state: Partial<T> & IOrderForm) {
-        const {valid, errorSpan, ...inputs} = state;
+        const {valid, errors, ...inputs} = state;
 
-        super.render({valid, errorSpan});
+        super.render({valid, errors});
         
         Object.assign(this, inputs);
         return this.container;

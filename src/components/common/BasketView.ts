@@ -34,10 +34,12 @@ export class BasketView extends Component<IBasketView> {
         if (items.length) {
             this._basketList.replaceChildren(...items);
             this.events.emit('basket:set');
+            this.setDisabled(this._buttonOrder, false);
         } else {
             this._basketList.replaceChildren(createElement<HTMLParagraphElement>('p', {
                 textContent: 'В корзине пока пусто, выберите что-нибудь по душе :)'
             }));
+            this.setDisabled(this._buttonOrder, true);
         }
     }
 

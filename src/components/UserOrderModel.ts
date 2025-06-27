@@ -1,63 +1,67 @@
-import { IUserOrder, IUserOrderModel } from "../types";
+import { FormErrors, IUserOrder, IUserOrderModel } from "../types";
 import { IEvents } from "./base/events";
 
-export class UserOrderModel implements IUserOrderModel{
-    private _orderData: IUserOrder;
+export class UserOrderModel implements IUserOrderModel {
     protected events: IEvents;
+    order: IUserOrder = {
+        email: '',
+        phone: '',
+        payment: null,
+        address: ''
+    };
+    formErrors: FormErrors = {};
 
-
-    constructor(orderData: IUserOrder, events: IEvents) {
-        this._orderData = orderData;
+    constructor(order: IUserOrder, events: IEvents) {
+        this.order = order;
         this.events = events;
     }
 
-    // Метод для получения всех данных
+    emitChanges(event: string, payload?: object) {
+        this.events.emit(event, payload ?? {});
+    }
+
     get orderData(): IUserOrder {
-        return this.orderData;
+        return this.order;
     }
 
-    // Метод для обновления данных заказа
-    updateOrder(newData: Partial<IUserOrder>): void {
-        this._orderData = {
-            ...this._orderData,
-            ...newData
-        };
-        this.events.emit('userOrder:updated', newData);
+    setOrderField(field: keyof IUserOrder, value: string) {
+        this.order[field] = value;
+
+        this.emitChanges('order:changed', {field: field})
     }
 
-    // Валидация данных заказа
-    validate(): boolean {
-        const { payment, email, phone, address } = this._orderData;
-        
-        // Простая валидация полей
-        if (!payment || !email || !phone || !address) {
-            return false;
+    validateOrder() {
+        const errors: FormErrors = {};
+
+        if (!this.order.email) {
+            errors.email = 'Необходимо указать email';
         }
-        
-        return true;
+
+        if (!this.order.phone) {
+            errors.phone = 'Необходимо указать телефон';
+        }
+
+        if (!this.order.address) {
+            errors.address = 'Необходимо указать адрес';
+        }
+
+        if (!this.order.payment === null) {
+            errors.payment = 'Необходимо указать вид оплаты';
+        }
+
+        this.formErrors = errors;
+        this.events.emit('formErrors:change', this.formErrors);
+
+        return errors;
     }
 
-    clearOrderData(): void {
-        this._orderData = {
+    initOrder() {
+        this.order = {
             payment: null,
             email: '',
             phone: '',
             address: '',
         };
-        this.events.emit('userOrder:cleared');
-    }
-
-    getValidatedData(): IUserOrder | null {
-        if (this.validate()) {
-            // Если валидация прошла успешно, возвращаем копию данных
-            this.events.emit('userOrder:ready', this._orderData);
-            const validatedData = {
-                ...this._orderData
-            };
-            // Очищаем данные после успешной валидации
-            return validatedData;
-        }
-        // Если валидация не прошла, возвращаем null
-        return null;
+        this.emitChanges('order:changed')
     }
 }

@@ -1,4 +1,4 @@
-import { IProduct, IBasketModel, TProductBasket } from "../types";
+import { IBasketModel, TProductBasket } from "../types";
 import { IEvents } from "./base/events";
 
 
@@ -54,5 +54,9 @@ export class BasketModel implements IBasketModel {
     // Метод проверки наличия товара в корзине
     hasProduct(productId: string): boolean {
         return this.items.some(item => item.id === productId);
+    }
+
+    getProductIds(): string[] {
+        return this.items.map(item => item.id);
     }
 }
