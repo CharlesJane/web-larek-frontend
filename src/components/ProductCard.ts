@@ -90,14 +90,18 @@ interface PreviewActions {
 }
 
 export class PreviewProductCard extends ProductCard<IProductCard<IProduct>> {
-    constructor(container: HTMLElement, actions?: PreviewActions) {
+    constructor(container: HTMLElement, actions?: PreviewActions, isInBasket?: boolean) {
         super(container);
-        this._button = ensureElement<HTMLButtonElement>('.card__button', this.container)
+        this._button = ensureElement<HTMLButtonElement>('.card__button', this.container);
 
         this._button.addEventListener('click', (event: MouseEvent) => {
             actions?.onClick?.(event);
-            this.setDisabled(this._button, true)
-        })
+            this.setDisabled(this._button, true);
+        });
+
+        if (isInBasket) {
+            this.setDisabled(this._button, true);
+        }
     }
 
     getContainer(): HTMLElement {

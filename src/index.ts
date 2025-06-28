@@ -72,15 +72,18 @@ events.on('productsList:loaded', () => {
 // Открываем модалку с превью карточки
 
 events.on('card:select', (item: IProduct) => {
+    const isInBasket = basketData.hasProduct(item.id);
+
     const previewCard = new PreviewProductCard(
         cloneTemplate(previewCardTemplate),
         {
             onClick: () => {
-                if(!basketData.hasProduct(item.id)) {
+                if (!isInBasket) {
                     events.emit('cardToBasket:add', item);
-                }  
+                }
             }
-        }
+        },
+        isInBasket
     );
 
     previewCard.render(item);
