@@ -15,7 +15,7 @@ export class ProductsModel implements IProductsModel {
 
     setItems(productArray: IProduct[]) {
         this._items = productArray;
-        this.events.emit('items:changed', { items: this._items });
+        this.events.emit('productsList:loaded');
     }
 
     getItems() {
@@ -29,6 +29,5 @@ export class ProductsModel implements IProductsModel {
 
     setPreview(item: IProduct) {
         this.preview = item.id;
-    }
-    
+    }   
 }

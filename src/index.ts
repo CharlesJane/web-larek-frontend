@@ -63,16 +63,10 @@ events.on('productsList:loaded', () => {
         const cardInstant = new GalleryProductCard(cardElement, {
             onClick: () => events.emit('card:select', card)
         });
-		return cardInstant.render({
-            id: card.id,
-            title: card.title,
-            price: card.price,
-            image: card.image,
-            category: card.category
-        });
+		return cardInstant.render(card);
 	});
 
-    page.counter = basketData.getCount();
+    page.counter = 0;
 });
 
 // Открываем модалку с превью карточки
@@ -82,19 +76,14 @@ events.on('card:select', (item: IProduct) => {
         cloneTemplate(previewCardTemplate),
         {
             onClick: () => {
-                events.emit('cardToBasket:add', item);
+                if(!basketData.hasProduct(item.id)) {
+                    events.emit('cardToBasket:add', item);
+                }  
             }
         }
     );
 
-    previewCard.render({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        image: item.image,
-        description: item.description,
-        category: item.category
-    });
+    previewCard.render(item);
     
     modal.render({
         content: previewCard.getContainer()
@@ -113,21 +102,17 @@ const updateBasket = () => {
         
         basketItem.index = index + 1;
         
-        return basketItem.render({
-            id: card.id,
-            title: card.title,
-            price: card.price
-        });
+        return basketItem.render(card);
     });
     
-    basket.totalPrice = basketData.getTotal();
     page.counter = basketData.getCount();
+    basket.totalPrice = basketData.getTotal();
 };
 
 // Обработчик добавления в корзину
 events.on('cardToBasket:add', (item: TProductBasket) => {
     basketData.addProduct(item);
-    basket.clear();
+    
     updateBasket();
 });
 
@@ -139,6 +124,7 @@ events.on('basketProduct:deleted', (card: TProductBasket) => {
 
 // Открываем модалку с корзиной 
 events.on('basket:open', () => {
+    basket.clear();
     modal.render({
         content: basket.render()
     })
@@ -258,9 +244,7 @@ events.on('modal:close', () => {
 
 api.getProductsList()
     .then((productsList) => {
-        productsData._items = productsList._items;
-
-        events.emit('productsList:loaded');
+        productsData.setItems(productsList._items);
     })
     .catch((err) => {
         console.log('Ошибка при получении данных:', err);
