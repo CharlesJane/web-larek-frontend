@@ -105,11 +105,7 @@ const updateBasket = () => {
         
         basketItem.index = index + 1;
         
-        return basketItem.render({ 
-            id: card.id, 
-            title: card.title, 
-            price: card.price 
-        });
+        return basketItem.render(card);
     });
     
     page.counter = basketData.getCount();
@@ -119,7 +115,7 @@ const updateBasket = () => {
 // Обработчик добавления в корзину
 events.on('cardToBasket:add', (item: TProductBasket) => {
     basketData.addProduct(item);
-    
+    basket.clear();
     updateBasket();
 });
 
@@ -131,7 +127,6 @@ events.on('basketProduct:deleted', (card: TProductBasket) => {
 
 // Открываем модалку с корзиной 
 events.on('basket:open', () => {
-    basket.clear();
     modal.render({
         content: basket.render()
     })
