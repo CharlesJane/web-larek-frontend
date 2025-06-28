@@ -102,7 +102,11 @@ const updateBasket = () => {
         
         basketItem.index = index + 1;
         
-        return basketItem.render(card);
+        return basketItem.render({ 
+            id: card.id, 
+            title: card.title, 
+            price: card.price 
+        });
     });
     
     page.counter = basketData.getCount();
